@@ -50,7 +50,8 @@ if __name__ == "__main__":
             }
         )
 
-    org_extractor = OrganizationExtractor()
+    # only english model train now
+    org_extractor = OrganizationExtractor(langs=["en"])
     results = []
     for record in records:
         lang = "zh" if record["language"] == "Chinese" else "en"
