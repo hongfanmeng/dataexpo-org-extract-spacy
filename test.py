@@ -1,8 +1,10 @@
 # Load data from DB
 import re
 from datetime import datetime
+from typing import List
 
 import pandas as pd
+from thefuzz import fuzz
 from tqdm import tqdm
 
 import config
@@ -22,6 +24,24 @@ def write_excel(df: pd.DataFrame, filename: str):
     worksheet.set_column(0, 2, 50, text_wrap_format)
 
     writer.close()
+
+
+def extract_upper(text):
+    return "".join(re.findall(r"[A-Z]", text))
+
+
+def check_org_correct(org: str, orgs_ans: List[str]):
+    if org is not None:
+        for orgs_ans in record["orgs_ans"]:
+            org_simp = extract_upper(org)
+            org_ans_simp = extract_upper(orgs_ans)
+            #  judge full org name and simp org name
+            if (
+                fuzz.partial_ratio(orgs_ans, org) > 80
+                or fuzz.ratio(org_simp, org_ans_simp) > 80
+            ):
+                return True
+    return False
 
 
 if __name__ == "__main__":
@@ -55,6 +75,7 @@ if __name__ == "__main__":
     org_extractor = OrganizationExtractor(langs=["en"])
     results = []
     print("extracting organizatino from text...")
+    correct_cnt = 0
     for record in tqdm(records):
         lang = "zh" if record["language"] == "Chinese" else "en"
         org = org_extractor.extract_org_from_text(record["text"], lang=lang)
@@ -65,8 +86,11 @@ if __name__ == "__main__":
                 "orgs_ans": "\n".join(record["orgs_ans"]),
             }
         )
+        correct_cnt += 1 if check_org_correct(org, orgs_ans) else 0
+
+    print(f"Correct rate: {correct_cnt}/{len(records)}")
 
     df = pd.DataFrame(results)
     now = datetime.now()
-    filename = f"output/results-{now.strftime('%m-%d-%H-%M')}.xlsx"
+    filename = f"output/test-{now.strftime('%m-%d-%H-%M')}.xlsx"
     write_excel(df, filename)
