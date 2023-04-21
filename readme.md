@@ -46,5 +46,12 @@ python -m spacy train config.cfg --output ./models/50k-en --paths.train ./files/
 Test model
 
 ```sh
+python test.py
+```
+
+Use own input, replace `files/input.xlsx` with your own input, and run the following, output will be write into `output/output-******.xlsx` (please create output folder before run)
+
+```sh
 python main.py
 ```
+
