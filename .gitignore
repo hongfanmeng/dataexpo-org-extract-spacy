@@ -9,3 +9,5 @@ demo
 
 *.spacy
 *.pkl
+
+output

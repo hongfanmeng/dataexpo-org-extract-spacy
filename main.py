@@ -29,9 +29,10 @@ if __name__ == "__main__":
         db_name=config.WEBSITE_DB_NAME, coll_name=config.WEBSITE_COLL_NAME
     )
 
-    df = pd.read_excel("test_data.xlsx")
+    df = pd.read_excel("files/test_data.xlsx")
 
     records = []
+    print("loading data from DB...")
     for index, row in tqdm(df.iterrows(), total=99):
         orgs_ans = re.split(r"\n|,", row["organization"])
         orgs_ans = list(map(lambda s: s.strip(), orgs_ans))
@@ -53,7 +54,8 @@ if __name__ == "__main__":
     # only english model train now
     org_extractor = OrganizationExtractor(langs=["en"])
     results = []
-    for record in records:
+    print("extracting organizatino from text...")
+    for record in tqdm(records):
         lang = "zh" if record["language"] == "Chinese" else "en"
         org = org_extractor.extract_org_from_text(record["text"], lang=lang)
         results.append(
@@ -66,5 +68,5 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(results)
     now = datetime.now()
-    filename = f"results-{now.strftime('%m-%d-%H-%M')}.xlsx"
+    filename = f"output/results-{now.strftime('%m-%d-%H-%M')}.xlsx"
     write_excel(df, filename)
