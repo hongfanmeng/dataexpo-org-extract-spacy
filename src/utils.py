@@ -1,5 +1,6 @@
 import json
 import random
+from typing import Union
 
 import ahocorasick
 from bs4 import BeautifulSoup
@@ -29,7 +30,7 @@ def get_client(
 
 
 def get_collection(
-    *, db_name: str, coll_name: str, client: MongoClient | None = None
+    *, db_name: str, coll_name: str, client: Union[MongoClient, None] = None
 ) -> Collection:
     if client is None:
         client = get_client()
