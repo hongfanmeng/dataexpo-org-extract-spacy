@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+        "twixes.pypi-assistant",
+        "ms-python.python",
+        "visualstudioexptteam.vscodeintellicode",
+        "eamodio.gitlens",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "ms-python.flake8"
+    ]
+}
