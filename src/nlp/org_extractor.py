@@ -5,6 +5,7 @@ from thefuzz import fuzz
 
 import config
 from data import get_org_list
+from utils import get_automaton
 
 MAX_TEXT_LEN = 10000
 
@@ -12,7 +13,8 @@ MAX_TEXT_LEN = 10000
 class OrganizationExtractor:
     def __init__(self, *, langs: List[str] = ["en", "zh"]):
         self.langs = langs
-        self.orgs_prior = get_org_list()
+        orgs_prior = get_org_list()
+        self.automaton_prior = get_automaton(orgs_prior)
         self.load_models()
 
     # load model of selected langs
@@ -73,9 +75,7 @@ class OrganizationExtractor:
             if not nlp_train:
                 mark -= 100
             # mark from prior org list
-            mark += sum(
-                [cutoff(fuzz.ratio(org, org_prior)) for org_prior in self.orgs_prior]
-            )
+            mark += 1000 if org in self.automaton_prior else 0
             return mark
 
         # sort by mark, the last one is highest
