@@ -1,36 +1,55 @@
-# Load data from DB
 from datetime import datetime
 
 import pandas as pd
 from tqdm import tqdm
+from tqdm.contrib.concurrent import process_map
 
 import config
 from nlp import OrganizationExtractor
-from utils import get_collection, get_text_from_html
+from utils import get_client, get_collection, get_text_from_html
+
+# using share client
+client = get_client()
+
+
+def get_data_from_db(url):
+    coll_list = [
+        get_collection(db_name="dataexpo", coll_name="top_website", client=client),
+        get_collection(db_name="dataexpo", coll_name="network_cruise", client=client),
+    ]
+    # find from multi coll
+    doc = next(
+        (
+            coll.find_one({"url": url})
+            for coll in coll_list
+            if coll.find_one({"url": url})
+        ),
+        "",
+    )
+    text = get_text_from_html(doc["content"])
+    # skip xml files
+    text = "" if text.startswith("<?xml") else text
+    return {
+        "text": text,
+        "url": doc["url"],
+        "language": doc["language"],
+    }
+
 
 if __name__ == "__main__":
-    coll = get_collection(
-        db_name=config.WEBSITE_DB_NAME, coll_name=config.WEBSITE_COLL_NAME
-    )
-
+    print("reading input...")
     df = pd.read_excel("files/input.xlsx")
+    urls = list(df["url"])
 
     records = []
+
     print("loading data from DB...")
-    for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-        doc = coll.find_one({"url": row["url"]})
-        text = get_text_from_html(doc["content"])
-        if not text or text.startswith("<?xml"):
-            continue
-        if doc["language"] != "English":
-            continue
-        records.append(
-            {
-                "text": text,
-                "url": doc["url"],
-                "language": doc["language"],
-            }
-        )
+    records = process_map(
+        get_data_from_db,
+        urls,
+        max_workers=config.MAX_WORKERS,
+        chunksize=100,
+    )
 
     # only english model train now
     org_extractor = OrganizationExtractor()
