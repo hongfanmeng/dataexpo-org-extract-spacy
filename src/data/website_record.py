@@ -5,7 +5,15 @@ from functools import partial
 from tqdm.contrib.concurrent import process_map
 
 import config
-from utils import get_collection, get_text_from_html, load_json_from, save_json_to
+from utils import (
+    get_client,
+    get_collection,
+    get_text_from_html,
+    load_json_from,
+    save_json_to,
+)
+
+client = get_client()
 
 
 def handle_chunk(
@@ -15,7 +23,9 @@ def handle_chunk(
     chunksize: int = 100,
 ):
     coll = get_collection(
-        db_name=config.WEBSITE_DB_NAME, coll_name=config.WEBSITE_COLL_NAME
+        db_name=config.WEBSITE_DB_NAME,
+        coll_name=config.WEBSITE_COLL_NAME,
+        client=client,
     )
     cursor = coll.aggregate(
         [

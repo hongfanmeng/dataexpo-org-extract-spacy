@@ -50,8 +50,10 @@ def load_json_from(path: str) -> dict:
     return data
 
 
-def get_text_from_html(html: str) -> str:
+def get_text_from_html(html: Union[str, None]) -> str:
     # some xml in DB
+    if html is None:
+        return ""
     parser = "lxml" if "<html" in html else "xml"
     soup = BeautifulSoup(html, features=parser)
     # kill all script and style elements

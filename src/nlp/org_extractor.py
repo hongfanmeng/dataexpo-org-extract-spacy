@@ -4,11 +4,15 @@ import spacy
 from thefuzz import fuzz
 
 import config
+from data import get_org_list
+
+MAX_TEXT_LEN = 10000
 
 
 class OrganizationExtractor:
     def __init__(self, *, langs: List[str] = ["en", "zh"]):
         self.langs = langs
+        self.orgs_prior = get_org_list()
         self.load_models()
 
     # load model of selected langs
@@ -36,6 +40,10 @@ class OrganizationExtractor:
         The function use two models to increase the acc of extraction
         """
 
+        if len(text) > MAX_TEXT_LEN:
+            half = MAX_TEXT_LEN // 2
+            text = text[:half] + text[-half:]
+
         nlp_trf, nlp_train = self.get_models_of_lang(lang)
 
         # model train by self
@@ -49,20 +57,25 @@ class OrganizationExtractor:
 
         # select ans from self trainning model
         # if not self trainning model, select ans from trf model
-        orgs = list(set(orgs_train)) if orgs_train else list(set(orgs_trf))
+        orgs = list(set(orgs_train)) if nlp_train else list(set(orgs_trf))
 
         # calc similarity of two org name
-        def get_fuzz_ratio(org_1, org_2):
-            mark = fuzz.partial_ratio(org_1, org_2)
-            return mark if mark > 80 else 0
+        def cutoff(mark, cutoff_val=80):
+            return mark if mark > cutoff_val else 0
 
         # the more appear in the org list from spacy model, the higher mark
-        def get_mark(o):
-            mark = sum([get_fuzz_ratio(o, ot) for ot in orgs_trf]) + len(o)
+        def get_mark(org):
+            mark = sum(
+                [cutoff(fuzz.partial_ratio(org, org_trf)) for org_trf in orgs_trf]
+            )
             # if not self trainning model, ans select form orgs_trf at least 100
             # so mark should minus 100
             if not nlp_train:
                 mark -= 100
+            # mark from prior org list
+            mark += sum(
+                [cutoff(fuzz.ratio(org, org_prior)) for org_prior in self.orgs_prior]
+            )
             return mark
 
         # sort by mark, the last one is highest
