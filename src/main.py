@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     records = []
     print("loading data from DB...")
-    for index, row in tqdm(df.iterrows(), total=99):
+    for index, row in tqdm(df.iterrows(), total=df.shape[0]):
         doc = coll.find_one({"url": row["url"]})
         text = get_text_from_html(doc["content"])
         if not text or text.startswith("<?xml"):
@@ -33,7 +33,7 @@ if __name__ == "__main__":
         )
 
     # only english model train now
-    org_extractor = OrganizationExtractor(langs=["en"])
+    org_extractor = OrganizationExtractor()
     results = []
     print("extracting organizatino from text...")
     for record in tqdm(records):

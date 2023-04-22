@@ -72,7 +72,7 @@ if __name__ == "__main__":
         )
 
     # only english model train now
-    org_extractor = OrganizationExtractor(langs=["en"])
+    org_extractor = OrganizationExtractor()
     results = []
     print("extracting organizatino from text...")
     correct_cnt = 0
